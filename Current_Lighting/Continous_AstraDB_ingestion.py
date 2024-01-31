@@ -17,7 +17,7 @@ astra_db_client_id = os.getenv('astra_db_client_id')
 astra_db_client_secret = os.getenv('astra_db_client_secret')
 astra_db_keyspace = os.getenv('astra_db_keyspace')
 astra_db_table = os.getenv('astra_db_table')
-astra_db_cloud_config = {'secure_connect_bundle': '/Users/adityatrilok/Documents/Customers/CurrentLighting/scb/secure-connect-current-lighting.zip'}
+astra_db_cloud_config = {'secure_connect_bundle': '/Users/adityatrilok/Documents/Customers/scb/secure-connect-current-lighting.zip'}
 
 # Astra Streaming connection details
 service_url = os.getenv('SERVICE_URL')
