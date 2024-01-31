@@ -1,0 +1,1 @@
+IOT_demo.ipynb - this code has all the business logic to load oil and gas well data into Astra vector DB, generate multi-modal embeddings and then, execute similarity search against user uploaded images and determine whether the user uploaded image has an anomaly or not. 
