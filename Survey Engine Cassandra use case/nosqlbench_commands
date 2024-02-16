@@ -1,0 +1,5 @@
+java -jar nb5.jar workloads/surveyusecase default --show-stacktraces \
+                            host=127.0.0.1 \
+                            port=9042 \
+                            keyspace=medallia \
+                            localdc=Cassandra

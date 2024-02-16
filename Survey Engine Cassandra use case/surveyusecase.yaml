@@ -1,0 +1,336 @@
+description: ''
+scenarios:
+  default:
+    schema1: run driver=cql tags='block:schema1' threads==1 cycles==UNDEF
+    schema2: run driver=cql tags='block:schema2' threads==1 cycles==UNDEF
+    schema3: run driver=cql tags='block:schema3' threads==1 cycles==UNDEF
+    schema4: run driver=cql tags='block:schema3' threads==1 cycles==UNDEF
+    schema5: run driver=cql tags='block:schema3' threads==1 cycles==UNDEF
+    rampup1: run driver=cql tags='block:rampup1' cycles===TEMPLATE(rampup-cycles,200) threads=auto
+    rampup2: run driver=cql tags='block:rampup1' cycles===TEMPLATE(rampup-cycles,200) threads=auto
+    rampup3: run driver=cql tags='block:rampup3' cycles===TEMPLATE(rampup-cycles,200) threads=auto
+    rampup4: run driver=cql tags='block:rampup4' cycles===TEMPLATE(rampup-cycles,200) threads=auto
+    rampup5: run driver=cql tags='block:rampup5' cycles===TEMPLATE(rampup-cycles,200) threads=auto
+    query1: run driver=cql tags='block:query1' cycles===TEMPLATE(main-cycles,10) threads=auto
+    query2: run driver=cql tags='block:query2' cycles===TEMPLATE(main-cycles,1) threads=auto
+    query3: run driver=cql tags='block:query3' cycles===TEMPLATE(main-cycles,1) threads=auto
+    query4: run driver=cql tags='block:query4' cycles===TEMPLATE(main-cycles,1) threads=auto
+    query5: run driver=cql tags='block:query5' cycles===TEMPLATE(main-cycles,1) threads=auto
+    query6: run driver=cql tags='block:query6' cycles===TEMPLATE(main-cycles,1) threads=auto
+    query7: run driver=cql tags='block:query7' cycles===TEMPLATE(main-cycles,1) threads=auto
+
+bindings:
+    spec_id_write: ToString(CycleRange(100, 999));
+    data_write: ToString(CycleRange(100, 999));
+    lastmod_write:   ToJavaInstant();
+    ballot_id_write: ToString(CycleRange(100, 999));
+    ask_now_spec_write: ToString(CycleRange(100, 999));
+    ballot_version_write: ToInt();
+    mobile_presentation_write: WeightedStrings('mp1:20;mp2:20;mp3:15;mp4:12;mp5:10');
+    presentation_write: WeightedStrings('p1:20;p2:20;p3:15;p4:12;p5:10');
+    status_write: WeightedStrings('Y:20;N:20');
+    version_write: ToInt();
+    diffs_write: List(HashRange(1,<<list-count-contributors:5>>),Combinations('XL;M')) ->java.util.List
+    field_values_write: Shuffle(1,<<map_pool:10000>>, 10); Map(HashRange(1, <<fieldsStartWith_count_max:5>>), ToString(), HashedFileExtractToString('data/lorem_ipsum_full.txt',<<map_value_length_min:10>>, <<map_value_length_max:11>>)); -> java.util.Map
+    ask_now_id_write: ToInt();
+    data_ask_now_write: WeightedStrings('da1:20;da2:20');
+    survey_program_ids_write: Set(HashRange(3L,5L)->long,NumberNameToString())
+    unit_ids_write: Set(HashRange(3L,5L)->long,NumberNameToString())
+    client_id_write:  ToString(CycleRange(100, 999));
+    version_ask_write: ToInt();
+    quota_write: ToInt();
+    unit_id_write: ToInt();
+    name_write: ToString(CycleRange(100, 999));
+    identifier_write: ToString(CycleRange(100, 999));
+    active_write: ToBoolean();
+    client_id_unit_write:  ToString(CycleRange(100, 999));
+    domain_write: ToString(CycleRange(100, 999));
+    code_write: ToString(CycleRange(100, 999));
+    survey_id_write: ToString(CycleRange(100, 999));
+    creation_date_write: ToJavaInstant();
+
+blocks:
+  schema1:
+    params:
+      prepared: false
+    ops:
+      create_table1: |
+           CREATE TABLE <<keyspace:baselines>>.spec (
+                      spec_id text PRIMARY KEY,
+                      data text,
+                      lastmod timestamp
+                      );
+  schema2:
+    params:
+      prepared: false
+    ops:
+      create_table2: |
+          CREATE TABLE <<keyspace:baselines>>.ballot (
+                          ballot_id text PRIMARY KEY,
+                          ask_now_spec text,
+                          ballot_version int,
+                          mobile_presentation text,
+                          presentation text,
+                          spec_id text,
+                          status text,
+                          version int,
+                          diffs list<text>,
+                          field_values map<text, text>
+                          );
+  schema3:
+    params:
+      prepared: false
+    ops:
+      create_table3: |
+          CREATE TABLE <<keyspace:baselines>>.ask_now (
+
+                          ask_now_id int,
+                          data_ask_now text,
+
+
+                          client_id text,
+                          version_ask int,
+                          quota int,
+                          PRIMARY KEY (client_id, ask_now_id));
+
+  schema4:
+      params:
+        prepared: false
+      ops:
+        create_table4: |
+          CREATE TABLE <<keyspace:baselines>>.unit (
+                      unit_id int,
+                      name text,
+                      identifier text,
+                      active boolean,
+                      client_id_unit text,
+                      PRIMARY KEY (client_id_unit, unit_id));
+  schema5:
+      params:
+        prepared: false
+      ops:
+        create_table5: |
+          CREATE TABLE <<keyspace:baselines>>.transaction_code (
+                    domain text,
+                    code text,
+                    survey_id text,
+                    creation_date timestamp,
+                    PRIMARY KEY (domain, code));
+  rampup1:
+    params:
+      cl: TEMPLATE(write_cl,LOCAL_QUORUM)
+      instrument: true
+      prepared: true
+    ops:
+      insert_rampup1: |
+           insert into <<keyspace:baselines>>.spec
+           ( spec_id,
+             data,
+             lastmod)
+           values({spec_id_write},
+           {data_write},
+           {lastmod_write});
+  rampup2:
+    params:
+      cl: TEMPLATE(write_cl,LOCAL_QUORUM)
+      instrument: true
+      prepared: true
+    ops:
+      insert_rampup2: |
+           insert into <<keyspace:baselines>>.ballot
+           ( ballot_id,
+             ask_now_spec,
+             ballot_version,
+             mobile_presentation,
+             presentation,
+             spec_id,
+             status,
+             version,
+             diffs,
+             field_values)
+           values({ballot_id_write},
+           {dask_now_spec_write},
+           {ballot_version_write},
+           {mobile_presentation_write},
+           {presentation_write},
+           {spec_id_write},
+           {status_write},
+           {version_write},
+           {diffs_write},
+           {field_values_write});
+  rampup3:
+    params:
+      cl: TEMPLATE(write_cl,LOCAL_QUORUM)
+      instrument: true
+      prepared: true
+    ops:
+      insert_rampup3: |
+           insert into <<keyspace:baselines>>.ask_now
+           (ask_now_id,
+             data_ask_now,
+             client_id,
+             version_ask,
+             quota)
+           values({ask_now_id_write},
+           {data_ask_now_write},
+           {client_id_write},
+           {version_ask_write},
+           {quota_write});
+  rampup4:
+    params:
+      cl: TEMPLATE(write_cl,LOCAL_QUORUM)
+      instrument: true
+      prepared: true
+    ops:
+      insert_rampup4: |
+           insert into <<keyspace:baselines>>.unit
+           ( unit_id,
+             name,
+             identifier,
+             active,
+             client_id_unit)
+           values({unit_id_write},
+           {name_write},
+           {identifier_write},
+           {active_write},
+           {client_id_unit_write});
+  rampup5:
+    params:
+      cl: TEMPLATE(write_cl,LOCAL_QUORUM)
+      instrument: true
+      prepared: true
+    ops:
+      insert_rampup4: |
+           insert into <<keyspace:baselines>>.transaction_code
+           ( domain,
+             code,
+             survey_id,
+             creation_date)
+           values({domain_write},
+           {code_write},
+           {survey_id_write},
+           {creation_date_write});
+
+  # CQL Query that maps to 'storeClient.getValue(key)'
+  query1:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+        statements: SELECT * FROM <<keyspace:baselines>>.transaction_code WHERE domain = '255' AND code = '255';
+
+  #CQL query that maps to 'storeClient.putIfNotObsolete(key, Versioned.value(value));'
+  #This translates to a LightWeight transaction in Cassandra which consists of 2 queries namely query 2 and query 3 below
+  query2:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+      statements: INSERT INTO <<keyspace:baselines>>.transaction_code (domain, code, survey_id, creation_date) VALUES ('908', '908', '1969-12-31 19:00:00.155000-0500', '908') IF NOT EXISTS;
+
+  query3:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+      statements: UPDATE <<keyspace:baselines>>.transaction_code SET survey_id = '255', creation_date = '1969-12-31 19:00:00.155000-0500' WHERE domain = '255' AND code = '255' IF creation_date < '1970-01-01 19:00:00.155000-0500';
+
+  #CQL for 'storeClient.get(clientId, Versioned.value(emptyMetadata));
+  #For ask_now table
+  query4:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+        statements: SELECT * FROM <<keyspace:baselines>>.ask_now WHERE client_id = '255';
+
+  #CQL for 'storeClient.get(clientId, Versioned.value(emptyMetadata));
+  #For unit table
+  query5:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+        statements: SELECT * FROM <<keyspace:baselines>>.unit WHERE client_id_unit = '255';
+
+  #CQL for 'storeClient.put(clientId, versioned<V>);'
+  #For 'ask_now' table
+  query6:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+      statements: INSERT INTO <<keyspace:baselines>>.ask_now (client_id, ask_now_id, data_ask_now, version_ask, quota) VALUES ('716', '716', 'da78', 333, 333) IF NOT EXISTS OR version_ask < 400;
+
+  #CQL for 'storeClient.put(clientId, versioned<V>);'
+  #For 'unit' table
+  query7:
+    params:
+      ratio: <<read_row_ratio:1>>
+      cl: '<<read_cl:LOCAL_QUORUM>>'
+    ops:
+      statements: INSERT INTO <<keyspace:baselines>>.unit (client_id_unit,unit_id , name, identifier, active) VALUES ('876', 765, '908', '908', False) IF NOT EXISTS;
+
+
+##The rest of the queries can follow the query configuration pattern shown above. Please see what the queries will look like with CQL basedc on the Java query shared
+  #For Chunk: storeClient.put(chunkKey, versioned<V>);
+  #Ensure that the below query is updated with the relevant table name and relevant values
+  #The CQL query is identical to the one above which is:
+  """INSERT INTO keyspace_name.ask_now (client_id, ask_now_id, data_ask_now, version_ask, quota) VALUES (?,?,?,?,?) IF NOT EXISTS OR version_ask < ?;"""
+
+  #For 'storeClient.get(chunkKey, Versioned.value(Chunk.empty()));', we recommend performing the CQL such as:
+  """SELECT * FROM keyspace_name.your_table WHERE your_key_column = '?';"""
+
+  #For Normal Ask now: storeClient.put(clientId, versioned<V>);
+  #The CQL will be a LightWeight Transacrtion once again and the query is:
+  """INSERT INTO keyspace_name.ask_now (client_id, ask_now_id, data_ask_now, version_ask, quota) VALUES (?, ?, ?, ?, ?) IF NOT EXISTS;
+  SELECT version_ask FROM keyspace_name.ask_now WHERE client_id = ? AND ask_now_id = ?;
+  UPDATE keyspace_name.ask_now SET data_ask_now = ?, version_ask = ?, quota = ? WHERE client_id = ? AND ask_now_id = ? IF version_ask = <current_version>;"""
+
+
+  #CQL for Ballot - storeClient.get(ballotId)
+  """SELECT * FROM keyspace_name.ballot WHERE ballot_id = '?'"""
+
+  #CQL for Ballot - storeClient.put(ballotId, Map<String, Object> mapValues);. Custom logic is necessary to translate Map<String, Object>
+  #Pass relevant values
+  """UPDATE keyspace_name.ballot
+SET ask_now_spec = ?,
+    ballot_version = ?,
+    mobile_presentation = ?,
+    presentation = ?,
+    spec_id = ?,
+    status = ?,
+    version = ?,
+    diffs = ?,
+    field_values = ?
+WHERE ballot_id = ?;"""
+
+
+  #CQL for Ballot - storeClient.putIfNotObsolete(ballotId,Versioned.value(tupleToMap(v.getValue()), v.getVersion())));
+  #Pass relevant values
+  """UPDATE keyspace_name.ballot
+SET ask_now_spec = ?,
+    ballot_version = ?,
+    mobile_presentation = ?,
+    presentation = ?,
+    spec_id = ?,
+    status = ?,
+    version = ?,
+    diffs = ?,
+    field_values = ?
+WHERE ballot_id = ?
+IF version = ?;"""
+
+"""SELECT version FROM keyspace_name.ballot WHERE ballot_id = '?';"""
+
+
+  #CQL for Ballot - storeClient.getAll(Iterable<K> ballotIds);
+  #We recommend firing multiple queries in parallel with a ballot_id value on each query
+  """SELECT * FROM keyspace_name.ballot WHERE ballot_id = '?'"""
+
+
+  #CQL for spec table - storeClient.get(id)
+  """SELECT * FROM keyspace_name.spec WHERE spec_id = '?';"""
+
+  #CQL for spec table - store.put(specId, data);
+  """INSERT INTO keyspace_name.spec (spec_id, data) VALUES ('?', '?');"""

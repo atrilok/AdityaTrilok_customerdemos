@@ -1,0 +1,64 @@
+
+
+##The rest of the queries can follow the query configuration pattern shown above. Please see what the queries will look like with CQL basedc on the Java query shared
+  #For Chunk: storeClient.put(chunkKey, versioned<V>);
+  #Ensure that the below query is updated with the relevant table name and relevant values
+  #The CQL query is identical to the one above which is:
+  """INSERT INTO keyspace_name.ask_now (client_id, ask_now_id, data_ask_now, version_ask, quota) VALUES (?,?,?,?,?) IF NOT EXISTS OR version_ask < ?;"""
+
+  #For 'storeClient.get(chunkKey, Versioned.value(Chunk.empty()));', we recommend performing the CQL such as:
+  """SELECT * FROM keyspace_name.your_table WHERE your_key_column = '?';"""
+
+  #For Normal Ask now: storeClient.put(clientId, versioned<V>);
+  #The CQL will be a LightWeight Transacrtion once again and the query is:
+  """INSERT INTO keyspace_name.ask_now (client_id, ask_now_id, data_ask_now, version_ask, quota) VALUES (?, ?, ?, ?, ?) IF NOT EXISTS;
+  SELECT version_ask FROM keyspace_name.ask_now WHERE client_id = ? AND ask_now_id = ?;
+  UPDATE keyspace_name.ask_now SET data_ask_now = ?, version_ask = ?, quota = ? WHERE client_id = ? AND ask_now_id = ? IF version_ask = <current_version>;"""
+
+
+  #CQL for Ballot - storeClient.get(ballotId)
+  """SELECT * FROM keyspace_name.ballot WHERE ballot_id = '?'"""
+
+  #CQL for Ballot - storeClient.put(ballotId, Map<String, Object> mapValues);. Custom logic is necessary to translate Map<String, Object>
+  #Pass relevant values
+  """UPDATE keyspace_name.ballot
+SET ask_now_spec = ?,
+    ballot_version = ?,
+    mobile_presentation = ?,
+    presentation = ?,
+    spec_id = ?,
+    status = ?,
+    version = ?,
+    diffs = ?,
+    field_values = ?
+WHERE ballot_id = ?;"""
+
+
+  #CQL for Ballot - storeClient.putIfNotObsolete(ballotId,Versioned.value(tupleToMap(v.getValue()), v.getVersion())));
+  #Pass relevant values
+  """UPDATE keyspace_name.ballot
+SET ask_now_spec = ?,
+    ballot_version = ?,
+    mobile_presentation = ?,
+    presentation = ?,
+    spec_id = ?,
+    status = ?,
+    version = ?,
+    diffs = ?,
+    field_values = ?
+WHERE ballot_id = ?
+IF version = ?;"""
+
+"""SELECT version FROM keyspace_name.ballot WHERE ballot_id = '?';"""
+
+
+  #CQL for Ballot - storeClient.getAll(Iterable<K> ballotIds);
+  #We recommend firing multiple queries in parallel with a ballot_id value on each query
+  """SELECT * FROM keyspace_name.ballot WHERE ballot_id = '?'"""
+
+
+  #CQL for spec table - storeClient.get(id)
+  """SELECT * FROM keyspace_name.spec WHERE spec_id = '?';"""
+
+  #CQL for spec table - store.put(specId, data);
+  """INSERT INTO keyspace_name.spec (spec_id, data) VALUES ('?', '?');"""
